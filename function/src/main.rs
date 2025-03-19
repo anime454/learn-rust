@@ -17,5 +17,8 @@ fn hello_world(name: String) {
 fn random_greeting(name: &str) -> String {
     let greetings = vec!["Hello", "Hi", "Hey", "Yo"];
     let num = rand::thread_rng().gen_range(0..4);
+
+    // we can return directly without using the return keyword
+    // the last expression in a function is returned
     format!("{}, {}!", greetings[num], name)
 }
