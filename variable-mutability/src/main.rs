@@ -5,7 +5,7 @@ fn default_immutable() {
     println!("The value of x is: {x}");
 
     // Since x is mutable we can change its value
-    x = 6;
+    // x = 6;
     // println!("The value of x is: {x}");
 }
 
