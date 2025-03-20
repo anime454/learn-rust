@@ -1,3 +1,4 @@
+use rand::{Rng, rng};
 use std::io::{self, Write};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -8,18 +9,25 @@ use termion::raw::IntoRawMode;
 use termion::{async_stdin, clear, cursor};
 
 fn main() {
+    let score = Arc::new(Mutex::new(0));
+    let score_clone = Arc::clone(&score);
     let board = Arc::new(Mutex::new([
         ['o'; 8], ['o'; 8], ['o'; 8], ['o'; 8], ['o'; 8], ['o'; 8], ['o'; 8], ['o'; 8],
     ]));
 
     let specx_loc = Arc::new(Mutex::new([4, 7])); // Player starts at bottom center
-    let meteorites = Arc::new(Mutex::new(vec![[1, 1], [4, 1], [7, 1]]));
+
+    // Generate 3 random (x, y) coordinates
+    let meteorites = Arc::new(Mutex::new(
+        (0..3)
+            .map(|_| [rng().random_range(1..8), rng().random_range(1..8)])
+            .collect::<Vec<_>>(),
+    ));
 
     let meteorites_clone = Arc::clone(&meteorites);
-    // let board_clone = Arc::clone(&board);
 
     // Spawn thread for moving meteorites
-    thread::spawn(move || {
+    thread::spawn(move || -> ! {
         loop {
             {
                 let mut meteor = meteorites_clone.lock().unwrap();
@@ -27,11 +35,15 @@ fn main() {
                     if m[1] < 7 {
                         m[1] += 1;
                     } else {
-                        m[1] = 0; // Reset meteorite position
+                        m[0] = rng().random_range(1..8);
+                        m[1]=0;
+                        *score_clone.lock().unwrap() += 1;
                     }
                 }
+                
+
             }
-            thread::sleep(Duration::from_secs(1)); // Meteorite moves every second
+            thread::sleep(Duration::from_millis(500)); // Meteorite moves every second
         }
     });
 
@@ -41,7 +53,7 @@ fn main() {
     let stdin = async_stdin();
     let mut stdin_keys = stdin.keys(); // Read keyboard input
 
-    loop {
+    'main_loop: loop {
 
         // Read input (non-blocking)
         if let Some(Ok(key)) = stdin_keys.next() {
@@ -53,15 +65,25 @@ fn main() {
             }
         }
 
+        // Check if meteorite is touched the x
+        for m in meteorites.lock().unwrap().iter() {
+            if m[0] == specx_loc.lock().unwrap()[0] && m[1] == specx_loc.lock().unwrap()[1] {
+                write!(stdout, "{}{}", clear::All, cursor::Goto(1, 1)).unwrap();
+                println!("Game Over!, You got {} scores.", *score.lock().unwrap());
+                stdout.flush().unwrap();
+                break 'main_loop;
+            }
+        }
+
         // Clear screen and move cursor to top
         write!(stdout, "{}{}", clear::All, cursor::Goto(1, 1)).unwrap();
-        draw(&board, &specx_loc, &meteorites);
+        draw(&board, &specx_loc, &meteorites, score.clone());
         stdout.flush().unwrap();
 
         thread::sleep(Duration::from_millis(50)); // Controls refresh rate
     }
 
-    println!("\nGame Over!");
+    println!("\rExit ...");
 }
 
 fn move_right(specx_loc: &Arc<Mutex<[usize; 2]>>) {
@@ -82,6 +104,7 @@ fn draw(
     board: &Arc<Mutex<[[char; 8]; 8]>>,
     specx_loc: &Arc<Mutex<[usize; 2]>>,
     meteorites: &Arc<Mutex<Vec<[usize; 2]>>>,
+    score: Arc<Mutex<i32>>,
 ) {
     let board = board.lock().unwrap();
     let specx_loc = specx_loc.lock().unwrap();
@@ -113,14 +136,5 @@ fn draw(
         }
         println!("\r");
     }
+    println!("\rScores: {}", *score.lock().unwrap())
 }
-
-// // Convert byte to Key type
-// fn byte_to_key(byte: u8) -> Option<Key> {
-//     match byte {
-//         b'q' => Some(Key::Char('q')),
-//         b'1' => Some(Key::Left),
-//         b'd' => Some(Key::Right),
-//         _ => None,
-//     }
-// }
