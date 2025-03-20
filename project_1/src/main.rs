@@ -1,4 +1,4 @@
-use std::io::{self, Read, Write};
+use std::io::{self, Write};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
@@ -16,7 +16,7 @@ fn main() {
     let meteorites = Arc::new(Mutex::new(vec![[1, 1], [4, 1], [7, 1]]));
 
     let meteorites_clone = Arc::clone(&meteorites);
-    let board_clone = Arc::clone(&board);
+    // let board_clone = Arc::clone(&board);
 
     // Spawn thread for moving meteorites
     thread::spawn(move || {
@@ -37,11 +37,11 @@ fn main() {
 
     // Setup terminal input mode
     let mut stdout = io::stdout().into_raw_mode().unwrap();
-    let mut stdin = async_stdin();
+
+    let stdin = async_stdin();
     let mut stdin_keys = stdin.keys(); // Read keyboard input
 
     loop {
-        let mut key_pressed = false;
 
         // Read input (non-blocking)
         if let Some(Ok(key)) = stdin_keys.next() {
@@ -51,7 +51,6 @@ fn main() {
                 Key::Right => move_right(&specx_loc),
                 _ => {}
             }
-            key_pressed = true;
         }
 
         // Clear screen and move cursor to top
@@ -95,7 +94,7 @@ fn draw(
             // Draw meteorites
             for &m in meteorites.iter() {
                 if m[0] == col && m[1] == row {
-                    print!("M");
+                    print!("U");
                     printed = true;
                     break;
                 }
