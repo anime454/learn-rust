@@ -12,7 +12,7 @@ fn main() {
     let score = Arc::new(Mutex::new(0));
     let score_clone = Arc::clone(&score);
     let board = Arc::new(Mutex::new([
-        ['o'; 8], ['o'; 8], ['o'; 8], ['o'; 8], ['o'; 8], ['o'; 8], ['o'; 8], ['o'; 8],
+        ['_'; 8], ['_'; 8], ['_'; 8], ['_'; 8], ['_'; 8], ['_'; 8], ['_'; 8], ['_'; 8],
     ]));
 
     let specx_loc = Arc::new(Mutex::new([4, 7])); // Player starts at bottom center
@@ -28,6 +28,7 @@ fn main() {
 
     // Spawn thread for moving meteorites
     thread::spawn(move || -> ! {
+        let mut sleep_mil = 500;
         loop {
             {
                 let mut meteor = meteorites_clone.lock().unwrap();
@@ -40,10 +41,12 @@ fn main() {
                         *score_clone.lock().unwrap() += 1;
                     }
                 }
-                
 
+                if *score_clone.lock().unwrap() > 50 && sleep_mil > 50 {
+                    sleep_mil -= 1;
+                }
             }
-            thread::sleep(Duration::from_millis(500)); // Meteorite moves every second
+            thread::sleep(Duration::from_millis(sleep_mil)); // Meteorite moves every second
         }
     });
 
