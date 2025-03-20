@@ -19,8 +19,8 @@ fn main() {
 
     // Generate 3 random (x, y) coordinates
     let meteorites = Arc::new(Mutex::new(
-        (0..3)
-            .map(|_| [rng().random_range(1..8), rng().random_range(1..8)])
+        (0..5)
+            .map(|_| [rng().random_range(0..7), rng().random_range(0..7)])
             .collect::<Vec<_>>(),
     ));
 
@@ -42,8 +42,11 @@ fn main() {
                     }
                 }
 
-                if *score_clone.lock().unwrap() > 50 && sleep_mil > 50 {
-                    sleep_mil -= 1;
+                if *score_clone.lock().unwrap() > 20 && sleep_mil > 50{
+                    sleep_mil -= 2;
+                    if  meteor.len() < 8 {
+                        meteor.push([rng().random_range(0..7), rng().random_range(0..7)]);
+                    }
                 }
             }
             thread::sleep(Duration::from_millis(sleep_mil)); // Meteorite moves every second
@@ -120,7 +123,7 @@ fn draw(
             // Draw meteorites
             for &m in meteorites.iter() {
                 if m[0] == col && m[1] == row {
-                    print!("U");
+                    print!("o");
                     printed = true;
                     break;
                 }
